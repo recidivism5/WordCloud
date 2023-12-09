@@ -16,12 +16,12 @@ GLenum glCheckError_(const char *file, int line){
 	return errorCode;
 }
 
-void texture_from_file(Texture *t, char *path){
+void load_texture(Texture *t, char *path){
 	//from https://gist.github.com/Svensational/6120653
 	png_image image = {0};
 	image.version = PNG_IMAGE_VERSION;
 	if (!png_image_begin_read_from_file(&image,path)){
-		fatal_error("texture_from_file: failed to load %s",path);
+		fatal_error("load_texture: failed to load %s",path);
 	}
 	image.format = PNG_FORMAT_RGBA;
 	png_byte *buffer = malloc_or_die(PNG_IMAGE_SIZE(image));
@@ -29,7 +29,7 @@ void texture_from_file(Texture *t, char *path){
 	// (as expected by openGL)
 	if (!png_image_finish_read(&image, NULL, buffer, -image.width*4, NULL)) {
 		png_image_free(&image);
-		fatal_error("texture_from_file: failed to load %s",path);
+		fatal_error("load_texture: failed to load %s",path);
 	}
 	t->width = image.width;
 	t->height = image.height;
@@ -167,19 +167,70 @@ static void compile_texture_color_shader(){
 	GET_UNIFORM(texture_color_shader,uTex);
 }
 
-void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count){
+void new_vao(GPUMesh *m, void *verts, int count, size_t size_of_element){
 	glGenVertexArrays(1,&m->vao);
 	glBindVertexArray(m->vao);
 	glGenBuffers(1,&m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER,m->vbo);
-	glBufferData(GL_ARRAY_BUFFER,count*sizeof(*verts),verts,GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,count*size_of_element,verts,GL_STATIC_DRAW);
+	m->vertex_count = count;
+}
+
+void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count){
+	new_vao(m,verts,count,sizeof(*verts));
 	glEnableVertexAttribArray(texture_color_shader.aPosition);
 	glEnableVertexAttribArray(texture_color_shader.aTexCoord);
 	glEnableVertexAttribArray(texture_color_shader.aColor);
 	glVertexAttribPointer(texture_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),0);
 	glVertexAttribPointer(texture_color_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,texcoord));
 	glVertexAttribPointer(texture_color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,color));
-	m->vertex_count = count;
+}
+
+TextureDiffuseShader texture_diffuse_shader = {
+	"#version 330\n"
+	"attribute vec3 aPosition;\n"
+	"attribute vec3 aNormal;\n"
+	"attribute vec2 aTexCoord;\n"
+	"varying vec3 vNormal;\n"
+	"varying vec2 vTexCoord;\n"
+	"uniform mat4 uModel;\n"
+	"uniform mat4 uMVP;\n"
+	"void main(){\n"
+	"	gl_Position = uMVP * vec4(aPosition,1.0);\n"
+	"	vNormal = (uModel * vec4(aNormal,0.0)).xyz;\n"
+	"	vTexCoord = aTexCoord;\n"
+	"}",
+
+	"#version 330\n"
+	"varying vec3 vNormal;\n"
+	"varying vec2 vTexCoord;\n"
+	"uniform sampler2D uTex;\n"
+	"uniform vec3 uLightDir;\n"
+	"void main(){\n"
+	"	vec4 sample = texture2D(uTex,vTexCoord);\n"
+	"	gl_FragColor = vec4((0.1 + max(0.0,dot(-normalize(uLightDir),vNormal))) * sample.rgb,sample.a);\n"
+	"}"
+};
+
+void compile_texture_diffuse_shader(){
+	COMPILE_SHADER(texture_diffuse_shader);
+	GET_ATTRIB(texture_diffuse_shader,aPosition);
+	GET_ATTRIB(texture_diffuse_shader,aNormal);
+	GET_ATTRIB(texture_diffuse_shader,aTexCoord);
+	GET_UNIFORM(texture_diffuse_shader,uModel);
+	GET_UNIFORM(texture_diffuse_shader,uMVP);
+	GET_UNIFORM(texture_diffuse_shader,uTex);
+	GET_UNIFORM(texture_diffuse_shader,uLightDir);
+}
+
+void gpu_mesh_from_texture_diffuse_verts(GPUMesh *m, TextureDiffuseVertex *verts, int count){
+	new_vao(m,verts,count,sizeof(*verts));
+	glEnableVertexAttribArray(texture_diffuse_shader.aPosition);
+	glEnableVertexAttribArray(texture_diffuse_shader.aNormal);
+	glEnableVertexAttribArray(texture_diffuse_shader.aTexCoord);
+	glVertexAttribPointer(texture_diffuse_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureDiffuseVertex),0);
+	glVertexAttribPointer(texture_diffuse_shader.aNormal,3,GL_FLOAT,GL_FALSE,sizeof(TextureDiffuseVertex),offsetof(TextureDiffuseVertex,normal));
+	glVertexAttribPointer(texture_diffuse_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureDiffuseVertex),offsetof(TextureDiffuseVertex,texcoord));
 }
 
 void delete_gpu_mesh(GPUMesh *m){
@@ -193,4 +244,5 @@ void delete_gpu_mesh(GPUMesh *m){
 void compile_shaders(){
 	compile_color_shader();
 	compile_texture_color_shader();
+	compile_texture_diffuse_shader();
 }

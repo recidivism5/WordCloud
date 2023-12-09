@@ -16,3 +16,6 @@
 [submodule "cglm"]
 	path = third_party/cglm
 	url = https://github.com/recp/cglm.git
+[submodule "fast_obj"]
+	path = third_party/fast_obj
+	url = https://github.com/thisistherk/fast_obj.git

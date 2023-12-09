@@ -16,7 +16,7 @@ TSTRUCT(Texture){
 	int width, height;
 };
 
-void texture_from_file(Texture *t, char *path);
+void load_texture(Texture *t, char *path);
 
 void check_shader(char *name, char *type, GLuint id);
 
@@ -65,11 +65,32 @@ TSTRUCT(TextureColorShader){
 	GLint uTex;
 } texture_color_shader;
 
+TSTRUCT(TextureDiffuseVertex){
+	vec3 position;
+	vec3 normal;
+	vec2 texcoord;
+};
+
+TSTRUCT(TextureDiffuseShader){
+	char *vert_src;
+	char *frag_src;
+	GLuint id;
+	GLint aPosition;
+	GLint aNormal;
+	GLint aTexCoord;
+	GLint uModel;
+	GLint uMVP;
+	GLint uTex;
+	GLint uLightDir;
+} texture_diffuse_shader;
+
 TextureColorVertex *TextureColorVertexListMakeRoom(TextureColorVertexList *list, int count);
 
 void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count);
 
 void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count);
+
+void gpu_mesh_from_texture_diffuse_verts(GPUMesh *m, TextureDiffuseVertex *verts, int count);
 
 void delete_gpu_mesh(GPUMesh *m);
 
