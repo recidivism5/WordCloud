@@ -43,6 +43,15 @@ TSTRUCT(ColorShader){
 	GLint uMVP;
 } color_shader;
 
+TSTRUCT(UniformColorShader){
+	char *vert_src;
+	char *frag_src;
+	GLuint id;
+	GLint aPosition;
+	GLint uMVP;
+	GLint uColor;
+} uniform_color_shader;
+
 TSTRUCT(TextureColorVertex){
 	vec3 position;
 	vec2 texcoord;
@@ -85,6 +94,8 @@ TSTRUCT(TextureDiffuseShader){
 } texture_diffuse_shader;
 
 TextureColorVertex *TextureColorVertexListMakeRoom(TextureColorVertexList *list, int count);
+
+void gpu_mesh_from_positions(GPUMesh *m, vec3 *verts, int count);
 
 void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count);
 

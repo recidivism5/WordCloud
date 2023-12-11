@@ -104,35 +104,20 @@ struct ColorShader color_shader = {
 	"}"
 };
 
-static void compile_color_shader(){
-	COMPILE_SHADER(color_shader);
-	GET_ATTRIB(color_shader,aPosition);
-	GET_ATTRIB(color_shader,aColor);
-	GET_UNIFORM(color_shader,uMVP);
-}
+UniformColorShader uniform_color_shader = {
+	"#version 330\n"
+	"attribute vec3 aPosition;\n"
+	"uniform mat4 uMVP;\n"
+	"void main(){\n"
+	"	gl_Position = uMVP * vec4(aPosition,1.0f);\n"
+	"}",
 
-void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count){
-	glGenVertexArrays(1,&m->vao);
-	glBindVertexArray(m->vao);
-	glGenBuffers(1,&m->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER,m->vbo);
-	glBufferData(GL_ARRAY_BUFFER,count*sizeof(*verts),verts,GL_STATIC_DRAW);
-	glEnableVertexAttribArray(color_shader.aPosition);
-	glEnableVertexAttribArray(color_shader.aColor);
-	glVertexAttribPointer(color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(ColorVertex),0);
-	glVertexAttribPointer(color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(ColorVertex),offsetof(ColorVertex,color));
-	m->vertex_count = count;
-}
-
-TextureColorVertex *TextureColorVertexListMakeRoom(TextureColorVertexList *list, int count){
-	if (list->used+count > list->total){
-		if (!list->total) list->total = 1;
-		while (list->used+count > list->total) list->total *= 2;
-		list->elements = realloc_or_die(list->elements,list->total*sizeof(*list->elements));
-	}
-	list->used += count;
-	return list->elements+list->used-count;
-}
+	"#version 330\n"
+	"uniform vec4 uColor;\n"
+	"void main(){\n"
+	"	gl_FragColor = uColor;\n"
+	"}"
+};
 
 struct TextureColorShader texture_color_shader = {
 	"#version 330\n"
@@ -157,34 +142,6 @@ struct TextureColorShader texture_color_shader = {
 	"	gl_FragColor = sample * vColor;\n"
 	"}"
 };
-
-static void compile_texture_color_shader(){
-	COMPILE_SHADER(texture_color_shader);
-	GET_ATTRIB(texture_color_shader,aPosition);
-	GET_ATTRIB(texture_color_shader,aTexCoord);
-	GET_ATTRIB(texture_color_shader,aColor);
-	GET_UNIFORM(texture_color_shader,uMVP);
-	GET_UNIFORM(texture_color_shader,uTex);
-}
-
-void new_vao(GPUMesh *m, void *verts, int count, size_t size_of_element){
-	glGenVertexArrays(1,&m->vao);
-	glBindVertexArray(m->vao);
-	glGenBuffers(1,&m->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER,m->vbo);
-	glBufferData(GL_ARRAY_BUFFER,count*size_of_element,verts,GL_STATIC_DRAW);
-	m->vertex_count = count;
-}
-
-void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count){
-	new_vao(m,verts,count,sizeof(*verts));
-	glEnableVertexAttribArray(texture_color_shader.aPosition);
-	glEnableVertexAttribArray(texture_color_shader.aTexCoord);
-	glEnableVertexAttribArray(texture_color_shader.aColor);
-	glVertexAttribPointer(texture_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),0);
-	glVertexAttribPointer(texture_color_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,texcoord));
-	glVertexAttribPointer(texture_color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,color));
-}
 
 TextureDiffuseShader texture_diffuse_shader = {
 	"#version 330\n"
@@ -212,7 +169,40 @@ TextureDiffuseShader texture_diffuse_shader = {
 	"}"
 };
 
-void compile_texture_diffuse_shader(){
+TextureColorVertex *TextureColorVertexListMakeRoom(TextureColorVertexList *list, int count){
+	if (list->used+count > list->total){
+		if (!list->total) list->total = 1;
+		while (list->used+count > list->total) list->total *= 2;
+		list->elements = realloc_or_die(list->elements,list->total*sizeof(*list->elements));
+	}
+	list->used += count;
+	return list->elements+list->used-count;
+}
+
+static void compile_color_shader(){
+	COMPILE_SHADER(color_shader);
+	GET_ATTRIB(color_shader,aPosition);
+	GET_ATTRIB(color_shader,aColor);
+	GET_UNIFORM(color_shader,uMVP);
+}
+
+static void compile_uniform_color_shader(){
+	COMPILE_SHADER(uniform_color_shader);
+	GET_ATTRIB(uniform_color_shader,aPosition);
+	GET_UNIFORM(uniform_color_shader,uMVP);
+	GET_UNIFORM(uniform_color_shader,uColor);
+}
+
+static void compile_texture_color_shader(){
+	COMPILE_SHADER(texture_color_shader);
+	GET_ATTRIB(texture_color_shader,aPosition);
+	GET_ATTRIB(texture_color_shader,aTexCoord);
+	GET_ATTRIB(texture_color_shader,aColor);
+	GET_UNIFORM(texture_color_shader,uMVP);
+	GET_UNIFORM(texture_color_shader,uTex);
+}
+
+static void compile_texture_diffuse_shader(){
 	COMPILE_SHADER(texture_diffuse_shader);
 	GET_ATTRIB(texture_diffuse_shader,aPosition);
 	GET_ATTRIB(texture_diffuse_shader,aNormal);
@@ -221,6 +211,46 @@ void compile_texture_diffuse_shader(){
 	GET_UNIFORM(texture_diffuse_shader,uMVP);
 	GET_UNIFORM(texture_diffuse_shader,uTex);
 	GET_UNIFORM(texture_diffuse_shader,uLightDir);
+}
+
+void compile_shaders(){
+	compile_color_shader();
+	compile_uniform_color_shader();
+	compile_texture_color_shader();
+	compile_texture_diffuse_shader();
+}
+
+void new_vao(GPUMesh *m, void *verts, int count, size_t size_of_element){
+	glGenVertexArrays(1,&m->vao);
+	glBindVertexArray(m->vao);
+	glGenBuffers(1,&m->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER,m->vbo);
+	glBufferData(GL_ARRAY_BUFFER,count*size_of_element,verts,GL_STATIC_DRAW);
+	m->vertex_count = count;
+}
+
+void gpu_mesh_from_positions(GPUMesh *m, vec3 *verts, int count){
+	new_vao(m,verts,count,sizeof(*verts));
+	glEnableVertexAttribArray(uniform_color_shader.aPosition);
+	glVertexAttribPointer(uniform_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(vec3),0);
+}
+
+void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count){
+	new_vao(m,verts,count,sizeof(*verts));
+	glEnableVertexAttribArray(color_shader.aPosition);
+	glEnableVertexAttribArray(color_shader.aColor);
+	glVertexAttribPointer(color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(ColorVertex),0);
+	glVertexAttribPointer(color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(ColorVertex),offsetof(ColorVertex,color));
+}
+
+void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count){
+	new_vao(m,verts,count,sizeof(*verts));
+	glEnableVertexAttribArray(texture_color_shader.aPosition);
+	glEnableVertexAttribArray(texture_color_shader.aTexCoord);
+	glEnableVertexAttribArray(texture_color_shader.aColor);
+	glVertexAttribPointer(texture_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),0);
+	glVertexAttribPointer(texture_color_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,texcoord));
+	glVertexAttribPointer(texture_color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,color));
 }
 
 void gpu_mesh_from_texture_diffuse_verts(GPUMesh *m, TextureDiffuseVertex *verts, int count){
@@ -239,10 +269,4 @@ void delete_gpu_mesh(GPUMesh *m){
 	m->vao = 0;
 	m->vbo = 0;
 	m->vertex_count = 0;
-}
-
-void compile_shaders(){
-	compile_color_shader();
-	compile_texture_color_shader();
-	compile_texture_diffuse_shader();
 }
