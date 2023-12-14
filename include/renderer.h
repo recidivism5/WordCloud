@@ -1,28 +1,28 @@
 #pragma once
 
+#include <base.h>
+
 #include <glad/glad.h>
-#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <png.h>
 #include <cglm/cglm.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
-#include <base.h>
+TSTRUCT(Image){
+	int width,height,rowPitch;
+	uint32_t *pixels;
+};
 
-GLenum glCheckError_(const char *file, int line);
-#define glCheckError() glCheckError_(__FILE__, __LINE__)
+TSTRUCT(Image8){
+	int width,height,rowPitch;
+	uint8_t *pixels;
+};
 
 TSTRUCT(Texture){
 	GLuint id;
 	int width, height;
 };
-
-void load_texture(Texture *t, char *path);
-
-void check_shader(char *name, char *type, GLuint id);
-
-void check_program(char *name, char *status_name, GLuint id, GLenum param);
-
-GLuint compile_shader(char *name, char *vert_src, char *frag_src);
 
 TSTRUCT(GPUMesh){
 	GLuint vao, vbo;
@@ -42,15 +42,6 @@ TSTRUCT(ColorShader){
 	GLint aColor;
 	GLint uMVP;
 } color_shader;
-
-TSTRUCT(UniformColorShader){
-	char *vert_src;
-	char *frag_src;
-	GLuint id;
-	GLint aPosition;
-	GLint uMVP;
-	GLint uColor;
-} uniform_color_shader;
 
 TSTRUCT(TextureColorVertex){
 	vec3 position;
@@ -74,35 +65,78 @@ TSTRUCT(TextureColorShader){
 	GLint uTex;
 } texture_color_shader;
 
-TSTRUCT(TextureDiffuseVertex){
-	vec3 position;
-	vec3 normal;
-	vec2 texcoord;
+TSTRUCT(RoundedRectVertex){
+	float Position[3];
+	float Rectangle[4];
+	float RoundingRadius;
+	uint32_t color;
+	uint32_t IconColor;
 };
 
-TSTRUCT(TextureDiffuseShader){
+TSTRUCT(RoundedRectVertexList){
+	int total, used;
+	RoundedRectVertex *elements;
+};
+
+enum RoundedRectangleType {
+	RR_CHANNEL=51,
+	RR_FLAT=102,
+	RR_DISH=153,
+	RR_CONE=204
+};
+
+enum RoundedRectangleIconType {
+	RR_ICON_NONE=36,
+	RR_ICON_PLAY=72,
+	RR_ICON_REVERSE_PLAY=108,
+	RR_ICON_PAUSE=144,
+	RR_ICON_NEXT=180,
+	RR_ICON_PREVIOUS=216,
+};
+
+TSTRUCT(RoundedRectShader){
 	char *vert_src;
 	char *frag_src;
 	GLuint id;
 	GLint aPosition;
-	GLint aNormal;
-	GLint aTexCoord;
-	GLint uModel;
-	GLint uMVP;
-	GLint uTex;
-	GLint uLightDir;
-} texture_diffuse_shader;
+	GLint aRectangle;
+	GLint aRoundingRadius;
+	GLint aColor;
+	GLint aIconColor;
+	GLint proj;
+} rounded_rect_shader;
+
+GLenum glCheckError_(const char *file, int line);
+#define glCheckError() glCheckError_(__FILE__, __LINE__)
+
+void texture_from_file(Texture *t, char *path);
+
+void texture_from_image(Texture *t, Image *i);
+
+void delete_texture(Texture *t);
+
+void check_shader(char *name, char *type, GLuint id);
+
+void check_program(char *name, char *status_name, GLuint id, GLenum param);
+
+GLuint compile_shader(char *name, char *vert_src, char *frag_src);
 
 TextureColorVertex *TextureColorVertexListMakeRoom(TextureColorVertexList *list, int count);
 
-void gpu_mesh_from_positions(GPUMesh *m, vec3 *verts, int count);
+RoundedRectVertex *RoundedRectVertexListMakeRoom(RoundedRectVertexList *list, int count);
+
+void append_rounded_rect(RoundedRectVertexList *verts, int x, int y, int z, int halfWidth, int halfHeight, float RoundingRadius, uint32_t color, uint32_t IconColor);
 
 void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count);
 
 void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count);
 
-void gpu_mesh_from_texture_diffuse_verts(GPUMesh *m, TextureDiffuseVertex *verts, int count);
-
 void delete_gpu_mesh(GPUMesh *m);
 
 void compile_shaders();
+
+void new_image(Image *i, int width, int height);
+
+void blit_8_to_32(Image8 *src, int sx, int sy, int swidth, int sheight, Image *dst, int dx, int dy, uint32_t color);
+
+void draw_string(Image *dst, int x, int y, FT_Face font_face, int font_height, uint32_t color, int char_count, char *string);
