@@ -19,3 +19,6 @@
 [submodule "fast_obj"]
 	path = third_party/fast_obj
 	url = https://github.com/thisistherk/fast_obj.git
+[submodule "freetype"]
+	path = third_party/freetype
+	url = https://github.com/freetype/freetype.git
