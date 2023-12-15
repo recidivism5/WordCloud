@@ -449,3 +449,35 @@ void draw_string(Image *dst, int x, int y, FT_Face font_face, int font_height, u
 		x += font_face->glyph->advance.x >> 6;
 	}
 }
+
+void draw_string_centered(Image *dst, int x, int y, FT_Face font_face, int font_height, uint32_t color, int char_count, char *string){
+	if (FT_Set_Pixel_Sizes(font_face,0,font_height)){
+		fatal_error("Failed to set freetype char size.");
+	}
+	int width = 0;
+	for (int i = 0; i < char_count; i++){
+		if (FT_Load_Char(font_face,string[i],FT_LOAD_RENDER)){
+			fatal_error("Failed to load freetype glyph");
+		}
+		width += font_face->glyph->advance.x >> 6;
+	}
+	if (FT_Load_Char(font_face,'9',FT_LOAD_RENDER)){
+		fatal_error("Failed to load freetype glyph");
+	}
+	int max_height = font_face->glyph->bitmap.rows;
+	x -= (float)width / 2;
+	y += (float)max_height / 2;
+	for (int i = 0; i < char_count; i++){
+		if (FT_Load_Char(font_face,string[i],FT_LOAD_RENDER)){
+			fatal_error("Failed to load freetype glyph");
+		}
+		Image8 glyph_image = {
+			.width = font_face->glyph->bitmap.width,
+			.height = font_face->glyph->bitmap.rows,
+			.rowPitch = font_face->glyph->bitmap.pitch,
+			.pixels = font_face->glyph->bitmap.buffer
+		};
+		blit_8_to_32(&glyph_image,0,0,glyph_image.width,glyph_image.height,dst,x+font_face->glyph->bitmap_left,y-font_face->glyph->bitmap_top,color & 0xffffff);
+		x += font_face->glyph->advance.x >> 6;
+	}
+}

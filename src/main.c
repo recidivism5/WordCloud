@@ -1,8 +1,5 @@
 #include <renderer.h>
 
-FT_Library ftlib;
-FT_Face uiface;
-
 TSTRUCT(Camera){
 	vec3 position;
 	vec3 euler;
@@ -28,6 +25,40 @@ void get_view(mat4 m, Camera *cam){
 	glm_mat4_mul(m,trans,m);
 }
 
+FT_Library ftlib;
+FT_Face uiface;
+void load_font(char *path, FT_Face *face){
+	FT_Error error = FT_New_Face(ftlib,path,0,face);
+	if (error == FT_Err_Unknown_File_Format){
+		fatal_error("Failed to load %s: unsupported font format.",path);
+	} else if (error){
+		fatal_error("Failed to load %s: file not found.",path);
+	}
+}
+
+TSTRUCT(Button){
+	int x, y, halfWidth, halfHeight, roundingRadius;
+	uint32_t color, IconColor;
+	char *string;
+	void (*func)(void);
+};
+#define BUTTON_GREY RGBA(127,127,127,RR_DISH)
+#define BUTTON_GREY_HIGHLIGHTED RGBA(160,160,160,RR_DISH)
+#define BUTTON_GREEN (0x7B9944 | (RR_DISH<<24))
+#define BUTTON_GREEN_HIGHLIGHTED (0x9ABC56 | (RR_DISH<<24))
+Button buttons[] = {
+	{50,14,46,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"Open Image",0},
+	{50,14+26*1,46,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"Open Text",0},
+	{50,14+26*2,46,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"Greyscale: Off",0},
+	{14,14+26*3,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"-",0},{200,14+26*3,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),L"+",0},
+	{14,14+26*4,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"-",0},{200,14+26*4,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),L"+",0},
+	{14,14+26*5,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"-",0},{200,14+26*5,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),L"+",0},
+	{50+68-46,14+26*6,68,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"Rct. Decompose: New",0},
+};
+bool PointInButton(int buttonX, int buttonY, int halfWidth, int halfHeight, int x, int y){
+	return abs(x-buttonX) < halfWidth && abs(y-buttonY) < halfHeight;
+}
+
 void error_callback(int error, const char* description){
 	fprintf(stderr, "Error: %s\n", description);
 }
@@ -48,9 +79,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+	double xpos,ypos;
+	glfwGetCursorPos(window,&xpos,&ypos);
 	switch (action){
 		case GLFW_PRESS:{
 			switch (button){
+				case GLFW_MOUSE_BUTTON_LEFT:{
+					for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
+						if (PointInButton(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
+							printf("Clicked %s\n",b->string);
+						}
+					}
+					break;
+				}
 			}
 			break;
 		}
@@ -62,21 +103,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-void clamp_euler(vec3 e){
-	float fp = 4*M_PI;
-	for (int i = 0; i < 3; i++){
-		if (e[i] > fp) e[i] -= fp;
-		else if (e[i] < -fp) e[i] += fp;
-	}
-}
-void rotate_euler(vec3 e, float dx, float dy, float sens){
-	e[1] += sens * dx;
-	e[0] += sens * dy;
-	clamp_euler(e);
-}
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
-	//rotate_euler(player.head_euler,xpos,ypos,-0.001f);
-	//glfwSetCursorPos(window, 0, 0);
+	for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
+		if (PointInButton(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
+			b->color = BUTTON_GREY_HIGHLIGHTED;
+		} else {
+			b->color = BUTTON_GREY;
+		}
+	}
 }
 
 GLFWwindow *create_centered_window(int width, int height, char *title){
@@ -99,15 +133,6 @@ GLFWwindow *create_centered_window(int width, int height, char *title){
 	glfwSetWindowPos(window,(vm->width-width)/2,(vm->height-height)/2);
 	glfwShowWindow(window);
 	return window;
-}
-
-void load_font(char *path, FT_Face *face){
-	FT_Error error = FT_New_Face(ftlib,path,0,face);
-	if (error == FT_Err_Unknown_File_Format){
-		fatal_error("Failed to load %s: unsupported font format.",path);
-	} else if (error){
-		fatal_error("Failed to load %s: file not found.",path);
-	}
 }
 
 void main(void)
@@ -157,13 +182,16 @@ void main(void)
 		int width,height;
 		glfwGetFramebufferSize(window,&width,&height);
 
+		mat4 ortho;
+		glm_ortho(0,width,0,height,-10,10,ortho);
+
 		mat4 persp;
 		glm_perspective(0.5f*M_PI,(float)width/(float)height,0.01f,1024.0f,persp);
 		mat4 vp;
 		get_view(vp,&camera);
 		glm_mat4_mul(persp,vp,vp);
  
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
@@ -172,28 +200,45 @@ void main(void)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
+		glUseProgram(rounded_rect_shader.id);
+		glUniformMatrix4fv(rounded_rect_shader.proj,1,GL_FALSE,ortho);
+		RoundedRectVertexList rrvl = {0};
+		for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
+			append_rounded_rect(&rrvl,b->x,height-1-b->y,0,b->halfWidth,b->halfHeight,b->roundingRadius,b->color,b->IconColor);
+		}
+		if (rrvl.used){
+			GPUMesh button_mesh;
+			gpu_mesh_from_rounded_rect_verts(&button_mesh,rrvl.elements,rrvl.used);
+			glDrawArrays(GL_TRIANGLES,0,rrvl.used);
+			free(rrvl.elements);
+			delete_gpu_mesh(&button_mesh);
+		}
+
 		Image text_image;
 		new_image(&text_image,width,height);
-		draw_string(&text_image,width/2,height/2,uiface,32,RGB(0,0,0),4,"fuck");
+		for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
+			draw_string_centered(&text_image,b->x,abs(b->y),uiface,12,RGB(255,255,255),strlen(b->string),b->string);
+		}
+		draw_string(&text_image,width/2,height/2,uiface,32,RGB(255,255,255),4,"xtxt");
 		Texture text_texture;
 		texture_from_image(&text_texture,&text_image);
 		glUseProgram(texture_color_shader.id);
 		TextureColorVertex screen_quad[6] = {
-			-1,1,0, 0,0, 0xffffffff,
-			-1,-1,0, 0,1, 0xffffffff,
-			 1,-1,0, 1,1, 0xffffffff,
+			-1,1,-1, 0,0, 0xffffffff,
+			-1,-1,-1, 0,1, 0xffffffff,
+			 1,-1,-1, 1,1, 0xffffffff,
 
-			 1,-1,0, 1,1, 0xffffffff,
-			 1,1,0, 1,0, 0xffffffff,
-			-1,1,0, 0,0, 0xffffffff,
+			 1,-1,-1, 1,1, 0xffffffff,
+			 1,1,-1, 1,0, 0xffffffff,
+			-1,1,-1, 0,0, 0xffffffff,
 		};
-		GPUMesh m;
-		gpu_mesh_from_texture_color_verts(&m,screen_quad,COUNT(screen_quad));
+		GPUMesh text_mesh;
+		gpu_mesh_from_texture_color_verts(&text_mesh,screen_quad,COUNT(screen_quad));
 		glActiveTexture(GL_TEXTURE0);
 		glUniform1i(texture_color_shader.uTex,0);
 		glUniformMatrix4fv(texture_color_shader.uMVP,1,GL_FALSE,GLM_MAT4_IDENTITY);
 		glDrawArrays(GL_TRIANGLES,0,COUNT(screen_quad));
-		delete_gpu_mesh(&m);
+		delete_gpu_mesh(&text_mesh);
 		delete_texture(&text_texture);
 		free(text_image.pixels);
 

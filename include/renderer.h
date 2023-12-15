@@ -131,6 +131,8 @@ void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count);
 
 void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count);
 
+void gpu_mesh_from_rounded_rect_verts(GPUMesh *m, RoundedRectVertex *verts, int count);
+
 void delete_gpu_mesh(GPUMesh *m);
 
 void compile_shaders();
@@ -140,3 +142,5 @@ void new_image(Image *i, int width, int height);
 void blit_8_to_32(Image8 *src, int sx, int sy, int swidth, int sheight, Image *dst, int dx, int dy, uint32_t color);
 
 void draw_string(Image *dst, int x, int y, FT_Face font_face, int font_height, uint32_t color, int char_count, char *string);
+
+void draw_string_centered(Image *dst, int x, int y, FT_Face font_face, int font_height, uint32_t color, int char_count, char *string);
