@@ -60,3 +60,9 @@ uint32_t fnv_1a(int keylen, char *key){
 int modulo(int i, int m){
 	return (i % m + m) % m;
 }
+
+void cstr_to_string(char *cstr, String *s){
+	s->len = strlen(cstr);
+	s->data = malloc_or_die(s->len);
+	memcpy(s->data,cstr,s->len);
+}

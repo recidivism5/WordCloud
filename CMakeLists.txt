@@ -32,6 +32,12 @@ add_subdirectory(third_party/fast_obj)
 include_directories(third_party/freetype/include)
 add_subdirectory(third_party/freetype)
 
+include_directories(third_party/nativefiledialog-extended/src/include)
+add_subdirectory(third_party/nativefiledialog-extended)
+
+include_directories(third_party/libjpeg-cmake)
+add_subdirectory(third_party/libjpeg-cmake)
+
 include_directories(include)
 file(GLOB_RECURSE WORDCLOUD_SRC CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 	 
@@ -47,7 +53,7 @@ if(MSVC)
 	)
 endif()
 
-target_link_libraries( WordCloud Boxer png16_static ${OPENGL_LIBRARIES} glfw glad OpenAL::OpenAL cglm fast_obj_lib freetype)
+target_link_libraries( WordCloud Boxer png16_static ${OPENGL_LIBRARIES} glfw glad OpenAL::OpenAL cglm fast_obj_lib freetype nfd libjpeg)
 if( MSVC )
 	if(${CMAKE_VERSION} VERSION_LESS "3.6.0") 
 		message( "\n\t[ WARNING ]\n\n\tCMake version lower than 3.6.\n\n\t - Please update CMake and rerun; OR\n\t - Manually set 'WordCloud' as StartUp Project in Visual Studio.\n" )

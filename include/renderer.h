@@ -5,17 +5,19 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <png.h>
+#include <jpeglib.h>    
+#include <jerror.h>
 #include <cglm/cglm.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 TSTRUCT(Image){
-	int width,height,rowPitch;
+	int width,height;
 	uint32_t *pixels;
 };
 
 TSTRUCT(Image8){
-	int width,height,rowPitch;
+	int width,height;
 	uint8_t *pixels;
 };
 
@@ -106,12 +108,14 @@ TSTRUCT(RoundedRectShader){
 	GLint proj;
 } rounded_rect_shader;
 
+void load_image(Image *img, char *path);
+
 GLenum glCheckError_(const char *file, int line);
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
-void texture_from_file(Texture *t, char *path);
-
 void texture_from_image(Texture *t, Image *i);
+
+void texture_from_file(Texture *t, char *path);
 
 void delete_texture(Texture *t);
 

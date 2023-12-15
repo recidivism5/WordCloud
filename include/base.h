@@ -24,6 +24,11 @@
 typedef struct name name;\
 struct name
 
+TSTRUCT(String){
+	char *data;
+	int len;
+};
+
 void fatal_error(char *format, ...);
 
 void *malloc_or_die(size_t size);
@@ -54,3 +59,5 @@ uint32_t fnv_1a(int keylen, char *key);
 
 //a proper modulo, handles negative numbers
 int modulo(int i, int m);
+
+void cstr_to_string(char *cstr, String *s);

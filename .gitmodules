@@ -22,3 +22,9 @@
 [submodule "freetype"]
 	path = third_party/freetype
 	url = https://github.com/freetype/freetype.git
+[submodule "nativefiledialog-extended"]
+	path = third_party/nativefiledialog-extended
+	url = https://github.com/btzy/nativefiledialog-extended.git
+[submodule "libjpeg-cmake"]
+	path = third_party/libjpeg-cmake
+	url = https://github.com/stohrendorf/libjpeg-cmake.git
