@@ -130,7 +130,7 @@ Button buttons[] = {
 	{14,14+26*5,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"-",0},{200,14+26*5,10,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),L"+",0},
 	{50+68-46,14+26*6,68,10,10,BUTTON_GREY,RGBA(0,0,0,RR_ICON_NONE),"Rct. Decompose: New",0},
 };
-bool PointInButton(int buttonX, int buttonY, int halfWidth, int halfHeight, int x, int y){
+bool point_in_button(int buttonX, int buttonY, int halfWidth, int halfHeight, int x, int y){
 	return abs(x-buttonX) < halfWidth && abs(y-buttonY) < halfHeight;
 }
 
@@ -161,7 +161,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			switch (button){
 				case GLFW_MOUSE_BUTTON_LEFT:{
 					for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
-						if (PointInButton(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
+						if (point_in_button(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
 							b->func();
 							break;
 						}
@@ -215,7 +215,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
 		pos[1] = originalPos[1] + (ypos - panPoint[1]);
 	}
 	for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
-		if (PointInButton(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
+		if (point_in_button(b->x,b->y,b->halfWidth,b->halfHeight,xpos,ypos)){
 			b->color = BUTTON_GREY_HIGHLIGHTED;
 		} else {
 			b->color = BUTTON_GREY;

@@ -12,33 +12,29 @@ void img_greyscale(Image *img){
 
 void img_gaussian_blur(Image *img, int strength){
 	float *kernel = malloc_or_die(strength*sizeof(*kernel));
-	float d = 3.0f / (strength-1);
 	float disx = 0.0f;
-	float inv2pi = 1.0f / sqrtf(2.0f*M_PI);
 	for (int i = 0; i < strength; i++){
-		kernel[i] = expf(-0.5f*disx*disx)*inv2pi;
-		disx += d;
+		kernel[i] = expf(-0.5f*disx*disx)/sqrtf(2.0f*M_PI); //This is the gaussian distribution with mean=0, standard_deviation=1
+		disx += 3.0f / (strength-1);						//it happens to pretty much reach zero at x=3, so we divide that range by strength-1 for a step interval.
 	}
 	float sum = 0.0f;
 	for (int i = 0; i < strength; i++){
-		sum += kernel[i];
+		sum += (i ? 2 : 1) * kernel[i]; //Our kernel is half of a full odd dimensional kernel. The first element is the center, the other elements have to be counted twice.
 	}
-	sum = 1.0f / sum;
 	for (int i = 0; i < strength; i++){
-		kernel[i] *= sum;
+		kernel[i] /= sum; //This is the normalization step
 	}
 	Image b;
 	b.width = img->width;
 	b.height = img->height;
 	b.pixels = malloc_or_die(b.width*b.height*sizeof(*b.pixels));
-	float inv255 = 1.0f / 255.0f;
 	for (int y = 0; y < img->height; y++){
 		for (int x = 0; x < img->width; x++){
 			float sums[3] = {0,0,0};
 			for (int dx = -strength+1; dx < strength-1; dx++){
 				uint8_t *p = img->pixels+y*img->width+CLAMP(x+dx,0,img->width-1);
 				for (int i = 0; i < 3; i++){
-					sums[i] = MIN(1.0f,sums[i]+inv255*p[i]*kernel[abs(dx)]);
+					sums[i] = MIN(1.0f,sums[i]+(p[i]/255.0f)*kernel[abs(dx)]);
 				}
 			}
 			uint8_t *p = b.pixels+y*b.width+x;
@@ -54,7 +50,7 @@ void img_gaussian_blur(Image *img, int strength){
 			for (int dy = -strength+1; dy < strength-1; dy++){
 				uint8_t *p = b.pixels+CLAMP(y+dy,0,b.height-1)*b.width+x;
 				for (int i = 0; i < 3; i++){
-					sums[i] = MIN(1.0f,sums[i]+inv255*p[i]*kernel[abs(dy)]);
+					sums[i] = MIN(1.0f,sums[i]+(p[i]/255.0f)*kernel[abs(dy)]);
 				}
 			}
 			uint8_t *p = img->pixels+y*img->width+x;
@@ -64,7 +60,6 @@ void img_gaussian_blur(Image *img, int strength){
 			p[3] = ((uint8_t *)(b.pixels+y*b.width+x))[3];
 		}
 	}
-
 	free(kernel);
 	free(b.pixels);
 }
@@ -117,7 +112,6 @@ void img_quantize(Image *img, int divisions){
 			}
 		}
 	}
-
 	free(invals);
 	free(outvals);
 }
