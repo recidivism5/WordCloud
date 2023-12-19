@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <boxer/boxer.h>
 
 #undef near //fuck deez macros lol
@@ -37,6 +38,10 @@ void *zalloc_or_die(size_t size);
 
 void *realloc_or_die(void *ptr, size_t size);
 
+char *load_file(char *path, int *size);
+
+bool is_alpha_numeric(char c);
+
 /*
 rand_int
 From: https://stackoverflow.com/a/822361
@@ -55,9 +60,11 @@ int rand_int_range(int min, int max);
 fnv_1a
 Fowler–Noll–Vo hash function. https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 */
-uint32_t fnv_1a(int keylen, char *key);
+uint32_t fnv_1a(char *key, int keylen);
 
 //a proper modulo, handles negative numbers
 int modulo(int i, int m);
 
 void cstr_to_string(char *cstr, String *s);
+
+void string_to_lower(size_t len, char *str);

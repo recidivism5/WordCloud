@@ -1,6 +1,7 @@
 #include <image_effects.h>
 #include <renderer.h>
 #include <nfd.h>
+#include <dictionary.h>
 
 TSTRUCT(Camera){
 	vec3 position;
@@ -281,6 +282,10 @@ void main(void)
 
 	NFD_Init();
 
+	parse_dictionary_file();
+
+	print_word_type("fuck");
+
 	camera.position[0] = 0;
 	camera.position[1] = 2;
 	camera.position[2] = 2;
@@ -347,14 +352,14 @@ void main(void)
 				glm_translate_make(mata,(vec3){pos[0],client_height-1-pos[1]-(i+1)*individualHeight,pos[2]});
 				glm_mat4_mul(mata,matb,matc);
 				glm_mat4_mul(ortho,matc,mata);
-				glUniformMatrix4fv(texture_color_shader.uMVP,1,GL_FALSE,mata);
+				glUniformMatrix4fv(texture_color_shader.uMVP,1,GL_FALSE,(GLfloat *)mata);
 				glDrawArrays(GL_TRIANGLES,0,imageQuad.vertex_count);
 			}
 			delete_gpu_mesh(&imageQuad);
 		}
 
 		glUseProgram(rounded_rect_shader.id);
-		glUniformMatrix4fv(rounded_rect_shader.proj,1,GL_FALSE,ortho);
+		glUniformMatrix4fv(rounded_rect_shader.proj,1,GL_FALSE,(GLfloat *)ortho);
 		RoundedRectVertexList rrvl = {0};
 		for (Button *b = buttons; b < buttons+COUNT(buttons); b++){
 			append_rounded_rect(&rrvl,b->x,client_height-1-b->y,0,b->halfWidth,b->halfHeight,b->roundingRadius,b->color,b->IconColor);
@@ -387,7 +392,7 @@ void main(void)
 		GPUMesh text_mesh;
 		gpu_mesh_from_texture_color_verts(&text_mesh,screen_quad,COUNT(screen_quad));
 		glUniform1i(texture_color_shader.uTex,0);
-		glUniformMatrix4fv(texture_color_shader.uMVP,1,GL_FALSE,GLM_MAT4_IDENTITY);
+		glUniformMatrix4fv(texture_color_shader.uMVP,1,GL_FALSE,(GLfloat *)GLM_MAT4_IDENTITY);
 		glDrawArrays(GL_TRIANGLES,0,COUNT(screen_quad));
 		delete_gpu_mesh(&text_mesh);
 		delete_texture(&text_texture);

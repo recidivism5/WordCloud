@@ -339,8 +339,8 @@ void gpu_mesh_from_color_verts(GPUMesh *m, ColorVertex *verts, int count){
 	new_vao(m,verts,count,sizeof(*verts));
 	glEnableVertexAttribArray(color_shader.aPosition);
 	glEnableVertexAttribArray(color_shader.aColor);
-	glVertexAttribPointer(color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(ColorVertex),0);
-	glVertexAttribPointer(color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(ColorVertex),offsetof(ColorVertex,color));
+	glVertexAttribPointer(color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(ColorVertex),(void *)0);
+	glVertexAttribPointer(color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(ColorVertex),(void *)offsetof(ColorVertex,color));
 }
 
 void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, int count){
@@ -348,9 +348,9 @@ void gpu_mesh_from_texture_color_verts(GPUMesh *m, TextureColorVertex *verts, in
 	glEnableVertexAttribArray(texture_color_shader.aPosition);
 	glEnableVertexAttribArray(texture_color_shader.aTexCoord);
 	glEnableVertexAttribArray(texture_color_shader.aColor);
-	glVertexAttribPointer(texture_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),0);
-	glVertexAttribPointer(texture_color_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,texcoord));
-	glVertexAttribPointer(texture_color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(TextureColorVertex),offsetof(TextureColorVertex,color));
+	glVertexAttribPointer(texture_color_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),(void *)0);
+	glVertexAttribPointer(texture_color_shader.aTexCoord,2,GL_FLOAT,GL_FALSE,sizeof(TextureColorVertex),(void *)offsetof(TextureColorVertex,texcoord));
+	glVertexAttribPointer(texture_color_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(TextureColorVertex),(void *)offsetof(TextureColorVertex,color));
 }
 
 void gpu_mesh_from_rounded_rect_verts(GPUMesh *m, RoundedRectVertex *verts, int count){
@@ -360,11 +360,11 @@ void gpu_mesh_from_rounded_rect_verts(GPUMesh *m, RoundedRectVertex *verts, int 
 	glEnableVertexAttribArray(rounded_rect_shader.aRoundingRadius);
 	glEnableVertexAttribArray(rounded_rect_shader.aColor);
 	glEnableVertexAttribArray(rounded_rect_shader.aIconColor);
-	glVertexAttribPointer(rounded_rect_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),0);
-	glVertexAttribPointer(rounded_rect_shader.aRectangle,4,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),offsetof(RoundedRectVertex,Rectangle));
-	glVertexAttribPointer(rounded_rect_shader.aRoundingRadius,1,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),offsetof(RoundedRectVertex,RoundingRadius));
-	glVertexAttribPointer(rounded_rect_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(RoundedRectVertex),offsetof(RoundedRectVertex,color));
-	glVertexAttribPointer(rounded_rect_shader.aIconColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(RoundedRectVertex),offsetof(RoundedRectVertex,IconColor));
+	glVertexAttribPointer(rounded_rect_shader.aPosition,3,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),(void *)0);
+	glVertexAttribPointer(rounded_rect_shader.aRectangle,4,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),(void *)offsetof(RoundedRectVertex,Rectangle));
+	glVertexAttribPointer(rounded_rect_shader.aRoundingRadius,1,GL_FLOAT,GL_FALSE,sizeof(RoundedRectVertex),(void *)offsetof(RoundedRectVertex,RoundingRadius));
+	glVertexAttribPointer(rounded_rect_shader.aColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(RoundedRectVertex),(void *)offsetof(RoundedRectVertex,color));
+	glVertexAttribPointer(rounded_rect_shader.aIconColor,4,GL_UNSIGNED_BYTE,GL_TRUE,sizeof(RoundedRectVertex),(void *)offsetof(RoundedRectVertex,IconColor));
 }
 
 void delete_gpu_mesh(GPUMesh *m){

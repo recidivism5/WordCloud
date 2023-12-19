@@ -28,6 +28,24 @@ void *realloc_or_die(void *ptr, size_t size){
 	return p;
 }
 
+char *load_file(char *path, int *size){
+	FILE *f = fopen(path,"rb");
+	if (!f){
+		fatal_error("Failed to open %s",path);
+	}
+	fseek(f,0,SEEK_END);
+	*size = ftell(f);
+	fseek(f,0,SEEK_SET);
+	char *bytes = malloc_or_die(*size);
+	fread(bytes,1,*size,f);
+	fclose(f);
+	return bytes;
+}
+
+bool is_alpha_numeric(char c){
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+}
+
 int rand_int(int n){
 	if ((n - 1) == RAND_MAX){
 		return rand();
@@ -48,7 +66,7 @@ int rand_int_range(int min, int max){
 	return rand_int(max-min+1) + min;
 }
 
-uint32_t fnv_1a(int keylen, char *key){
+uint32_t fnv_1a(char *key, int keylen){
 	uint32_t index = 2166136261u;
 	for (int i = 0; i < keylen; i++){
 		index ^= key[i];
@@ -65,4 +83,10 @@ void cstr_to_string(char *cstr, String *s){
 	s->len = strlen(cstr);
 	s->data = malloc_or_die(s->len);
 	memcpy(s->data,cstr,s->len);
+}
+
+void string_to_lower(size_t len, char *str){
+	for (size_t i = 0; i < len; i++){
+		str[i] = tolower(str[i]);
+	}
 }
