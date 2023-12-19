@@ -81,10 +81,9 @@ void update(){
 	memcpy(images[3].image.pixels,images[2].image.pixels,size);
 
 	ColorRectList crl = {0};
-	img_rect_decompose(&images[3].image,&crl);
-	/*ColorRectList crl = {0};
-	useNewDecompose ? RectangleDecompose(&crl,&images[3].image,rectangleDecomposeMinDim) : OldRectangleDecompose(&crl,&images[3].image,rectangleDecomposeMinDim);
+	img_rect_decompose(&images[3].image,&crl,rectangleDecomposeMinDim);
 
+	/*
 	if (gtext.ptr){
 		WordArray wa;
 		WordsByAspect(&wa,&gtext,NOUN|VERB,0,"Consolas",LOWER_CASE);

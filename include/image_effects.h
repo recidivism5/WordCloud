@@ -32,4 +32,4 @@ void img_gaussian_blur(Image *img, int strength);
 
 void img_quantize(Image *img, int divisions);
 
-void img_rect_decompose(Image *img, ColorRectList *crl);
+void img_rect_decompose(Image *img, ColorRectList *crl, int min_dim);
