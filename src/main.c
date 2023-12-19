@@ -1,3 +1,4 @@
+#include <image_effects.h>
 #include <renderer.h>
 #include <nfd.h>
 
@@ -79,6 +80,8 @@ void update(){
 	img_quantize(&images[2].image,quantizeDivisions);
 	memcpy(images[3].image.pixels,images[2].image.pixels,size);
 
+	ColorRectList crl = {0};
+	img_rect_decompose(&images[3].image,&crl);
 	/*ColorRectList crl = {0};
 	useNewDecompose ? RectangleDecompose(&crl,&images[3].image,rectangleDecomposeMinDim) : OldRectangleDecompose(&crl,&images[3].image,rectangleDecomposeMinDim);
 
@@ -190,21 +193,23 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
-	double xpos,ypos;
-	glfwGetCursorPos(window,&xpos,&ypos);
-	ivec2 pt = {xpos,ypos};
-	int oldScale = scale;
 	int clamped_yoffset = yoffset > 0 ? 1 : -1;
-	scale = CLAMP(scale+clamped_yoffset,1,100);
-	if (oldScale != scale){
-		pt[0] -= pos[0];
-		pt[1] -= pos[1];
-		if (scale > oldScale){
-			pos[0] -= pt[0] / (float)(scale-1);
-			pos[1] -= pt[1] / (float)(scale-1);
-		} else {
-			pos[0] += pt[0] / (float)(scale+1);
-			pos[1] += pt[1] / (float)(scale+1);
+	for (int i = 0; i < abs(yoffset); i++){
+		double xpos,ypos;
+		glfwGetCursorPos(window,&xpos,&ypos);
+		ivec2 pt = {xpos,ypos};
+		int oldScale = scale;
+		scale = CLAMP(scale+clamped_yoffset,1,100);
+		if (oldScale != scale){
+			pt[0] -= pos[0];
+			pt[1] -= pos[1];
+			if (scale > oldScale){
+				pos[0] -= pt[0] / (float)(scale-1);
+				pos[1] -= pt[1] / (float)(scale-1);
+			} else {
+				pos[0] += pt[0] / (float)(scale+1);
+				pos[1] += pt[1] / (float)(scale+1);
+			}
 		}
 	}
 }

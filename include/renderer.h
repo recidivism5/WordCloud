@@ -1,25 +1,12 @@
 #pragma once
 
-#include <base.h>
+#include <image.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <png.h>
-#include <jpeglib.h>    
-#include <jerror.h>
 #include <cglm/cglm.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-
-TSTRUCT(Image){
-	int width,height;
-	uint32_t *pixels;
-};
-
-TSTRUCT(Image8){
-	int width,height;
-	uint8_t *pixels;
-};
 
 TSTRUCT(Texture){
 	GLuint id;
